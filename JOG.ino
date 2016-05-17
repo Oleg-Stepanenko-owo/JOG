@@ -12,21 +12,6 @@ static const int pkgSize = 13;
 static int valInc = 0;
 //---------------------------------------------------------------------------
 
-//const int pkgData[pkgSize][pkgLong] = {
-//  {128, 248, 248,  0}, // 0 Scroll LEFT
-//  {191, 248, 24,   0}, // 1 Scroll RIGHT
-//  {224, 193, 8,    0}, // 2 Push
-//  {224, 184, 144,  0}, // 3 to Right
-//  {224, 232, 48,   0}, // 4 to Left
-//  {224, 120, 16,  12}, // 5 to Up
-//  {224, 216, 80,  0},  // 6 to Donw
-//  {224, 56,  200, 0},  // 7 to Right + Up
-//  {224, 152, 104, 0},  // 8 to Right + Down
-//  {224, 104, 152, 0},  // 9 to Left + Up
-//  {224, 200, 56,  0},  // 10 to Left + Down
-//  {224, 248, 8,   0},  // 11 after Right, Left, Right+Up,
-//  {240, 248, 8,   0}   // 12 after Up, Down, Right+Down, Left+UP, Left+Down
-//};
 const int pkgData[pkgSize][pkgLong] = {
   {224, 62}, // 0 Scroll LEFT
   {227, 62}, // 1 Scroll RIGHT
@@ -43,9 +28,16 @@ const int pkgData[pkgSize][pkgLong] = {
   {124, 34}   // 12 after Up, Down, Right+Down, Left+UP, Left+Down
 };
 
+//---------------------------------------------------------------------------
 int pkgVal[pkgLong];
-const int waitTime = 200; //300 mSec
+const int waitTime = 80; //300 mSec
+const int mouseRange = 25;
+const int incRangeCount = 3;
+int lastAction;
+int actionIteration;
+int moveStep;
 unsigned long wTime;
+//---------------------------------------------------------------------------
 
 enum eActions {
   SCROLL_LEFT = 0,
@@ -69,9 +61,12 @@ void setup()
 {
   mySerial.begin(2400);
   Serial.begin(9600);
+  lastAction = -1;
+  actionIteration = 0;
+  moveStep = mouseRange;
   // initialize mouse control:
   Mouse.begin();
-  Keyboard.begin();
+  //Keyboard.begin();
 }
 
 //---------------------------------------------------------------------------
@@ -83,26 +78,27 @@ int getAction()
       Serial.print("ACTION = "); Serial.println(a);
       switch ( a ) {
         case SCROLL_LEFT :
-          Keyboard.press(KEY_LEFT_SHIFT);
-          Keyboard.press(KEY_TAB);
+          Keyboard.begin();
+          Keyboard.press(KEY_ESC);
           return SCROLL_LEFT;
         case SCROLL_RIGHT :
-          Keyboard.press(KEY_TAB);
+          Mouse.click(MOUSE_RIGHT);
           return SCROLL_RIGHT;
         case PUSH :
-          Keyboard.press(KEY_RETURN);
+          Mouse.click();
+          delay(100);
           return PUSH;
         case TO_RIGHT :
-          Keyboard.press(KEY_RIGHT_ARROW);
+          Mouse.move(moveStep, 0, 0);
           return TO_RIGHT;
         case TO_LEFT :
-          Keyboard.press(KEY_LEFT_ARROW);
+          Mouse.move(-moveStep, 0, 0);
           return TO_LEFT;
         case TO_UP :
-          Keyboard.press(KEY_UP_ARROW);
+          Mouse.move(0, -moveStep, 0);
           return TO_UP;
         case TO_DOWN :
-          Keyboard.press(KEY_DOWN_ARROW);
+          Mouse.move(0, moveStep, 0);
           return TO_DOWN;
         case TO_RIGHT_UP :
           return TO_RIGHT_UP;
@@ -136,15 +132,31 @@ void loop()
       return;
     }  wTime = 0;
 
-    Serial.println(pkgVal[valInc - 1]);
+    // Serial.println(pkgVal[valInc - 1]);
     if ( pkgVal[valInc - 1] == 0 ) {
       valInc = 0;
       return;
     }
     if ( valInc == pkgLong ) {
-      if ( -1 != getAction() ) {
-        delay(100);
-        Keyboard.releaseAll();
+      int iAction = getAction();
+      if ( -1 != iAction ) {
+        // delay(100);
+        if ( iAction == SCROLL_LEFT )
+        {
+          Keyboard.releaseAll();
+          Keyboard.end();
+        } else if (TO_RIGHT >= iAction || iAction <= TO_DOWN) {
+          if ( iAction == lastAction ) {
+            ++actionIteration;
+            if ( actionIteration % incRangeCount == 0 ) {
+              moveStep += mouseRange;
+            }
+          } else {
+            lastAction = iAction;
+            actionIteration = 0;
+            moveStep = mouseRange;
+          }
+        }
         wTime = (millis() + waitTime);
       }
       valInc = 0;
