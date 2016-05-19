@@ -4,12 +4,12 @@
 #include "Mouse.h"
 #include <SoftwareSerial.h>
 
-#define VERSIO_JOG "0.3"
+#define VERSIO_JOG "0.4"
 
 SoftwareSerial mySerial(10, 11); // RX, TX
 //---------------------------------------------------------------------------
 static const int pkgLong = 2;
-static const int pkgSize = 13;
+static const int pkgSize = 16;
 static int valInc = 0;
 //---------------------------------------------------------------------------
 
@@ -26,18 +26,25 @@ const int pkgData[pkgSize][pkgLong] = {
   {224, 104},// 9 to Left + Up
   {224, 200},// 10 to Left + Down
   {124, 34}, // 11 after Right, Left, Right+Up,
-  {124, 34}  // 12 after Up, Down, Right+Down, Left+UP, Left+Down
+  {124, 34}, // 12 after Up, Down, Right+Down, Left+UP, Left+Down
+  {231, 62}, // 13 SCROLL_RIGHT_1
+  {235, 62}, // 14 SCROLL_RIGHT_2
+  {232, 62}  // 15 SCROLL_LEFT_1
 };
 
 //---------------------------------------------------------------------------
 int pkgVal[pkgLong];
-const int waitTime = 80; //300 mSec
+const int waitTime = 150; //300 mSec
+const int maxWaitNextAction = 500;
 const int mouseRange = 25;
 const int incRangeCount = 3;
+
 int lastAction;
 int actionIteration;
 int moveStep;
+
 unsigned long wTime;
+unsigned long wFinishActionTime;
 
 bool bKybAction;
 //---------------------------------------------------------------------------
@@ -55,26 +62,27 @@ enum eActions {
   TO_LEFT_UP,
   TO_LEFT_DOWN,
   AFTER_DOWN_1,
-  AFTER_DOWN_2
+  AFTER_DOWN_2,
+  SCROLL_RIGHT_1,
+  SCROLL_RIGHT_2,
+  SCROLL_LEFT_1
 };
 
 //---------------------------------------------------------------------------
 void setup()
 //---------------------------------------------------------------------------
 {
-
-  Serial.begin(19200);
-  delay(1000);
-  Serial.print("Start jog version:"); //Serial.println( VERSIO_JOG );
-   Serial.print("Start jog version:");
-    Serial.print("Start jog version:");
-     Serial.print("Start jog version:"); Serial.print("Start jog version:");
-
+  Serial.begin(9600);
   mySerial.begin(2400);
-  
+
+  delay(100);
+  Serial.print("Start jog version:"); Serial.println( VERSIO_JOG );
   lastAction = -1;
   actionIteration = 0;
   moveStep = mouseRange;
+  wTime = 0;
+  wFinishActionTime = 0;
+
   // initialize mouse control:
   Mouse.begin();
   Keyboard.begin();
@@ -88,13 +96,18 @@ int getAction()
 {
   for ( int a = 0; a < pkgSize; a++ ) {
     if ( pkgData[a][0] == pkgVal[0] && pkgData[a][1] == pkgVal[1] ) {
-      //      Serial.print("ACTION = "); Serial.println(a);
+      //      Serial.print("pkgVal = "); Serial.print(pkgVal[0]);
+      //      Serial.print(" "); Serial.println(pkgVal[1]);
       switch ( a ) {
         case SCROLL_LEFT :
+        case SCROLL_LEFT_1 :
           Keyboard.press(KEY_ESC);
           return SCROLL_LEFT;
         case SCROLL_RIGHT :
+        case SCROLL_RIGHT_1 :
+        case SCROLL_RIGHT_2 :
           bKybAction = !bKybAction;
+          Serial.print("bKybAction = "); Serial.println(bKybAction);
           return SCROLL_RIGHT;
         case PUSH :
           {
@@ -153,13 +166,15 @@ void loop()
 {
   if ( mySerial.available() ) {
     pkgVal[valInc++] = mySerial.read();
+    Serial.print(pkgVal[valInc - 1]); Serial.println();
     if ( wTime && (wTime > millis()) ) {
       valInc = 0;
+      //Serial.print("1 ");
       return;
     }
     wTime = 0;
     // Serial.println(pkgVal[valInc - 1]);
-    if ( pkgVal[valInc - 1] == 0 ) {
+    if ( (!pkgVal[valInc - 1])  || (valInc > pkgLong) ) {
       valInc = 0;
       return;
     }
@@ -167,36 +182,62 @@ void loop()
 
   if ( valInc == pkgLong ) {
     int iAction = getAction();
-    if ( -1 != iAction ) {
-      // delay(100);
+    if ( (-1 != iAction) && (SCROLL_RIGHT_1 >= iAction) ) {
+      Serial.println(" "); Serial.print("Action:"); Serial.println(iAction);
+
+      valInc = 0;
       if ( iAction == SCROLL_LEFT )
       {
         Keyboard.releaseAll();
         wTime = ( millis() + 300 );
-      } else if ( iAction == SCROLL_RIGHT ) {
-        wTime = ( millis() + 600 );
-      } else if ( iAction == PUSH ) {
+      }
+      else if ( iAction == SCROLL_RIGHT )
+      {
         wTime = ( millis() + 300 );
-      } else if (TO_RIGHT >= iAction || iAction <= TO_DOWN) {
-        if ( !bKybAction ) { // only for mouse
-          if ( iAction == lastAction ) {
+      }
+      else if ( iAction == PUSH )
+      {
+        wTime = ( millis() + 600 );
+        Keyboard.releaseAll();
+      }
+      else if (TO_RIGHT >= iAction || iAction <= TO_DOWN)
+      {
+        if ( !bKybAction )
+        { // only for mouse
+
+          if ( iAction == lastAction )
+          {
+            if ( (wFinishActionTime + maxWaitNextAction) < millis() )
+            {
+              actionIteration = 0;
+              moveStep = mouseRange;
+            }
+
+            Serial.print("actionIteration="); Serial.println(actionIteration);
             ++actionIteration;
-            if ( actionIteration % incRangeCount == 0 ) {
+            if ( actionIteration % incRangeCount == 0 )
+            {
               moveStep += mouseRange;
             }
-          } else {
+            wFinishActionTime = millis();
+          }
+          else
+          {
             lastAction = iAction;
             actionIteration = 0;
             moveStep = mouseRange;
           }
           wTime = (millis() + waitTime);
-        } else {
+        }
+        else
+        {
+          delay(100);
           Keyboard.releaseAll();
           wTime = (millis() + waitTime);
         }
       } // else if (TO_RIGHT >= iAction || iAction <= TO_DOWN)
     } // -1 != iAction
   }
-  valInc = 0;
+  //valInc = 0;
 }
 
