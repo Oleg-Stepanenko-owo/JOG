@@ -9,7 +9,7 @@
 SoftwareSerial mySerial(10, 11); // RX, TX
 //---------------------------------------------------------------------------
 static const int pkgLong = 2;
-static const int pkgSize = 16;
+static const int pkgSize = 25;
 static int valInc = 0;
 //---------------------------------------------------------------------------
 
@@ -29,7 +29,16 @@ const int pkgData[pkgSize][pkgLong] = {
   {124, 34}, // 12 after Up, Down, Right+Down, Left+UP, Left+Down
   {231, 62}, // 13 SCROLL_RIGHT_1
   {235, 62}, // 14 SCROLL_RIGHT_2
-  {232, 62}  // 15 SCROLL_LEFT_1
+  {232, 62},  // 15 SCROLL_LEFT_1
+  {56, 34},   // 16 Map/guide
+  {124, 192}, // 17 Audio
+  {124, 200}, // 18 Cancel
+  {60, 50},   // 19 Menu
+  {34, 52},   // 20 A/C
+  {44, 34},   // 21 Info
+  {60, 42},   // 22 Setup
+  {60, 68},   // 23 Light
+  { -1, -1}   // 24 Long Push
 };
 
 //---------------------------------------------------------------------------
@@ -38,6 +47,7 @@ const int waitTime = 150; //300 mSec
 const int maxWaitNextAction = 500;
 const int mouseRange = 25;
 const int incRangeCount = 3;
+const int longpushtime =  1000;
 
 int lastAction;
 int actionIteration;
@@ -45,6 +55,8 @@ int moveStep;
 
 unsigned long wTime;
 unsigned long wFinishActionTime;
+unsigned long wIsPush;
+unsigned long wIsLongPush;
 
 bool bKybAction;
 //---------------------------------------------------------------------------
@@ -65,7 +77,16 @@ enum eActions {
   AFTER_DOWN_2,
   SCROLL_RIGHT_1,
   SCROLL_RIGHT_2,
-  SCROLL_LEFT_1
+  SCROLL_LEFT_1,
+  B_MAP,
+  B_AUDIO,
+  B_CANCEL,
+  B_MENU,
+  B_AC,
+  B_INFO,
+  B_SETUP,
+  B_LIGHT,
+  LONG_PUSH
 };
 
 //---------------------------------------------------------------------------
@@ -101,20 +122,23 @@ int getAction()
       switch ( a ) {
         case SCROLL_LEFT :
         case SCROLL_LEFT_1 :
-          Keyboard.press(KEY_ESC);
+          if ( bKybAction) Keyboard.press(KEY_LEFT_ARROW);
+          else Mouse.move(0, 0, 10);
           return SCROLL_LEFT;
         case SCROLL_RIGHT :
         case SCROLL_RIGHT_1 :
         case SCROLL_RIGHT_2 :
-          bKybAction = !bKybAction;
-          Serial.print("bKybAction = "); Serial.println(bKybAction);
+          {
+            if ( bKybAction) Keyboard.press(KEY_RIGHT_ARROW);
+            else Mouse.move(0, 0, -10);
+          }
           return SCROLL_RIGHT;
         case PUSH :
-          {
-            if ( bKybAction) Keyboard.press( KEY_RETURN );
-            else Mouse.click();
-            delay(100);
-          }
+          //          {
+          //            if ( bKybAction) Keyboard.press( KEY_RETURN );
+          //            else Mouse.click();
+          //          delay(100);
+          //          }
           return PUSH;
         case TO_RIGHT :
           {
@@ -152,6 +176,24 @@ int getAction()
         case AFTER_DOWN_2 :
           Keyboard.releaseAll();
           return AFTER_DOWN_1;
+        case  B_MAP:
+          return B_MAP;
+        case B_AUDIO :
+          return B_AUDIO;
+        case B_CANCEL :
+          Keyboard.press(KEY_ESC);
+          return B_CANCEL;
+        case B_MENU :
+          Keyboard.press(KEY_LEFT_GUI);
+          return B_MENU;
+        case  B_AC :
+          return B_AC;
+        case B_INFO :
+          return B_INFO;
+        case B_SETUP :
+          return B_SETUP;
+        case B_LIGHT :
+          return B_LIGHT;
         default:
           return -1;
       }
@@ -180,19 +222,56 @@ void loop()
     }
   }
 
+  if ( (0 != wIsPush) && (wIsPush < millis()) ) {
+    // PUSH
+    wIsPush = 0;
+    wIsLongPush = 0;
+    if ( bKybAction) Keyboard.press( KEY_RETURN );
+    else Mouse.click();
+    delay(100);
+    Serial.println("PUSH!!!");
+    lastAction = 0;
+    Keyboard.releaseAll();
+  } else if ( ( 0 != wIsLongPush) && ( wIsLongPush < millis()) ) {
+    // Long PUSH
+    wIsPush = 0;
+    wIsLongPush = 0;
+    Serial.println("LONG PUSH!!!");
+    lastAction = 0;
+    delay(300);
+    Keyboard.releaseAll();
+    wTime = (millis() + 300);
+  }
+
   if ( valInc == pkgLong ) {
     int iAction = getAction();
-    if ( (-1 != iAction) && (SCROLL_RIGHT_1 >= iAction) ) {
+
+    if ( PUSH == iAction ) {
+      if ( lastAction == PUSH ) {
+        wIsPush = millis() + 200;
+        valInc = 0;
+      }
+      else {
+        Serial.println("!2!");
+        wIsPush = millis() + 200;
+        wIsLongPush = millis() + 500;
+        lastAction = PUSH;
+        valInc = 0;
+      }
+      return;
+    }
+    else if ( ( -1 != iAction ) && ( B_LIGHT >= iAction ) ) {
       Serial.println(" "); Serial.print("Action:"); Serial.println(iAction);
 
       valInc = 0;
-      if ( iAction == SCROLL_LEFT )
+      if ( (iAction == SCROLL_LEFT) || (iAction == SCROLL_LEFT_1) )
       {
         Keyboard.releaseAll();
         wTime = ( millis() + 300 );
       }
-      else if ( iAction == SCROLL_RIGHT )
+      else if ( (iAction == SCROLL_RIGHT) || (iAction == SCROLL_RIGHT_1) || (iAction == SCROLL_RIGHT_2)  )
       {
+        Keyboard.releaseAll();
         wTime = ( millis() + 300 );
       }
       else if ( iAction == PUSH )
@@ -236,6 +315,18 @@ void loop()
           wTime = (millis() + waitTime);
         }
       } // else if (TO_RIGHT >= iAction || iAction <= TO_DOWN)
+      else if (B_MAP >= iAction || iAction <= B_LIGHT)
+      {
+        if (B_SETUP == iAction ) {
+          bKybAction = !bKybAction;
+          Serial.print("bKybAction = "); Serial.println(bKybAction);
+        }
+
+        valInc = 0;
+        delay(100);
+        Keyboard.releaseAll();
+        wTime = (millis() + waitTime);
+      }
     } // -1 != iAction
   }
   //valInc = 0;
