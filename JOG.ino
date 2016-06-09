@@ -2,15 +2,24 @@
 
 #include "Keyboard.h"
 #include "Mouse.h"
+
+#include "AVCLanDrv.h"
+#include "AVCLanHonda.h"
+#include "config.h" 
+
 // #include <SoftwareSerial.h>
 
-#define VERSIO_JOG "0.6"
+#define VERSIO_JOG "0.7"
 
 // SoftwareSerial mySerial(10, 9); // RX, TX
 //---------------------------------------------------------------------------
 static const int pkgLong = 4;
 static const int pkgSize = 21;
 static int valInc = 0;
+
+
+#define HONDA_DIS_ON   sbi(COMMUT_PORT, COMMUT_OUT);
+#define HONDA_DIS_OFF  cbi(COMMUT_PORT, COMMUT_OUT);  
 //---------------------------------------------------------------------------
 
 const int pkgData[pkgSize][pkgLong] = {
@@ -91,7 +100,10 @@ void setup()
 {
   Serial.begin(4800);
   Serial1.begin(4800);
-
+  
+  avclan.begin();
+  avclanHonda.begin(); 
+  
   pinMode(iPin, OUTPUT);
   digitalWrite(iPin, LOW);
   bSwitchPin = false;
