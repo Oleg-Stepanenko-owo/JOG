@@ -76,10 +76,11 @@ void AVCLanHonda::setWaitTime( const unsigned long mTime )
 // Use the last received message to determine the corresponding action ID,
 // store it in avclan object
 //--------------------------------------------------------------------------------
-void AVCLanHonda::getActionID()
+byte AVCLanHonda::getActionID()
 //--------------------------------------------------------------------------------
 {
   avclan.actionID = avclan.getActionID( mtSearchHead, mtSearchHeadSize );
+  return avclan.actionID;
 };
 
 // process action

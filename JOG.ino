@@ -1,17 +1,12 @@
-// only for Arduino like Leonardo
-
 #include "Keyboard.h"
 #include "Mouse.h"
 
 #include "AVCLanDrv.h"
 #include "AVCLanHonda.h"
-#include "config.h" 
-
-// #include <SoftwareSerial.h>
+#include "config.h"
 
 #define VERSIO_JOG "0.7"
 
-// SoftwareSerial mySerial(10, 9); // RX, TX
 //---------------------------------------------------------------------------
 static const int pkgLong = 4;
 static const int pkgSize = 21;
@@ -19,7 +14,7 @@ static int valInc = 0;
 
 
 #define HONDA_DIS_ON   sbi(COMMUT_PORT, COMMUT_OUT);
-#define HONDA_DIS_OFF  cbi(COMMUT_PORT, COMMUT_OUT);  
+#define HONDA_DIS_OFF  cbi(COMMUT_PORT, COMMUT_OUT);
 //---------------------------------------------------------------------------
 
 const int pkgData[pkgSize][pkgLong] = {
@@ -64,10 +59,7 @@ unsigned long wIsPush;
 unsigned long wIsLongPush;
 
 bool bKybAction;
-
-bool bSwitchPin;
-const int iPin = 9;
-
+bool isMainDisplay;
 //---------------------------------------------------------------------------
 
 enum eActions {
@@ -98,18 +90,17 @@ enum eActions {
 void setup()
 //---------------------------------------------------------------------------
 {
-  Serial.begin(4800);
-  Serial1.begin(4800);
-  
+  HONDA_DIS_ON;
+
+  Serial.begin(250000);
+  Serial1.begin(250000);
+
   avclan.begin();
-  avclanHonda.begin(); 
-  
-  pinMode(iPin, OUTPUT);
-  digitalWrite(iPin, LOW);
-  bSwitchPin = false;
+  avclanHonda.begin();
 
   delay(100);
-  Serial.print("Start jog version:"); Serial.println( VERSIO_JOG );
+  Serial.print("Start jog version:");
+  Serial1.println( VERSIO_JOG );
 
   lastAction = -1;
   actionIteration = 0;
@@ -120,6 +111,10 @@ void setup()
   Keyboard.begin();
 
   bKybAction = true;
+
+  delay(10000); //sleep for showing original HONDA display
+  HONDA_DIS_OFF;
+  isMainDisplay = false;
 }
 
 //---------------------------------------------------------------------------
@@ -184,18 +179,39 @@ int getAction()
 void loop()
 //---------------------------------------------------------------------------
 {
+  //----------------------- AVC LAN ------------------------------------------
+  if ( INPUT_IS_SET ) {
+    //Serial.println("E");
+    byte res = avclan.readMessage();
+    if ( !res )
+    {
+      switch (avclanHonda.getActionID())
+      {
+        case ACT_CAM_ON:
+          HONDA_DIS_ON;
+          break;
+        case ACT_CAM_OFF:
+          if ( !isMainDisplay ) HONDA_DIS_OFF;
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  //----------------------- JOG ----------------------------------------------
   if ( Serial1.available() ) {
     pkgVal[valInc++] = Serial1.read();
     // Serial.println(pkgVal[valInc - 1]);
 
     if (  valInc == 1 && pkgVal[0] != 128 && pkgVal[0] != 129 && pkgVal[0] != 255  ) {
       valInc = 0;
-      Serial.println("E1");
+      Serial.println("JE1");
       return;
     } else if ( valInc == 2 && pkgVal[1] > 3 && pkgVal[1] != 64
                 && pkgVal[1] != 32 && pkgVal[1] != 4 && pkgVal[1] != 16 && pkgVal[1] != 8 ) {
       valInc = 0;
-      Serial.println("E2");
+      Serial.println("JE2");
       return;
     }
   }
@@ -208,7 +224,6 @@ void loop()
     else Mouse.click();
 
     delay(100);
-    // Serial.println("PUSH!!!");
 
     lastAction = 0;
     Keyboard.releaseAll();
@@ -216,11 +231,15 @@ void loop()
     // Long PUSH
     wIsPush = 0;
     wIsLongPush = 0;
-    Serial.println("LONG PUSH!!!");
+    //    Serial.println("LONG PUSH!!!");
 
-    if ( bSwitchPin ) digitalWrite( iPin, LOW );
-    else digitalWrite( iPin, HIGH );
-    bSwitchPin = !bSwitchPin;
+    isMainDisplay = !isMainDisplay;
+
+    if ( isMainDisplay ) {
+      HONDA_DIS_ON;
+    } else {
+      HONDA_DIS_OFF;
+    }
 
     lastAction = LONG_PUSH;
     delay(100);
@@ -229,9 +248,8 @@ void loop()
   }
 
   if ( valInc == pkgLong ) {
-
     int iAction = getAction();
-    Serial.print("A:"); Serial.println(iAction);
+    //    Serial.print("A:"); Serial.println(iAction);
 
     if ( -1 != iAction ) valInc = 0;
 
@@ -239,7 +257,7 @@ void loop()
 
     if ( (lastAction == iAction) && wTime && (wTime > millis()) ) {
       valInc = 0;
-      Serial.println("wTime");
+      //      Serial.println("wTime");
       return;
     }
     wTime = 0;
@@ -257,7 +275,7 @@ void loop()
       return;
     }
     else if ( ( -1 != iAction ) && ( B_LIGHT >= iAction ) ) {
-      Serial.println(" "); Serial.print("Action:"); Serial.println(iAction);
+      //      Serial.println(" "); Serial.print("Action:"); Serial.println(iAction);
       //----------------------- ACTION EVENTS -------------------------------------
       valInc = 0;
       if ( iAction == SCROLL_LEFT )
@@ -296,7 +314,7 @@ void loop()
           }
           lastAction = iAction;
           wTime = ( millis() + waitTime );
-          Serial.print("actionIteration="); Serial.println(actionIteration);
+          //          Serial.print("actionIteration="); Serial.println(actionIteration);
           ++actionIteration;
           if ( actionIteration % incRangeCount == 0 )
           {
@@ -338,7 +356,7 @@ void loop()
         Keyboard.releaseAll();
 
       } else if (B_MAP >= iAction || iAction <= B_LIGHT) {
-        Serial.println("KEYBOARD");
+        //Serial.println("KEYBOARD");
         lastAction = iAction;
 
         if ( B_SETUP == iAction ) {

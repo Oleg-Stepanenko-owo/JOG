@@ -56,7 +56,7 @@ class AVCLanHonda
 {
   public:
     void begin ();                    // initialisation, obligatory method
-    void getActionID();               // get action id by recieved message, obligatory method
+    byte getActionID();               // get action id by recieved message, obligatory method
     void processAction(AvcActionID);  // process action, obligatory method
     byte sendStatus();                // send CD-changer status to head
 

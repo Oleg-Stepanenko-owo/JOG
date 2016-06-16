@@ -1,27 +1,20 @@
 #include "AVCLanDrv.h"
 #include "AVCLanHonda.h"
-#include <SoftwareSerial.h>
 
-SoftwareSerial logSerial (10, 0); // RX, TX
 //--------------------------------------------------------------------------------
 void AVCLanDrv::begin ()
 //--------------------------------------------------------------------------------
 {
   // AVCLan TX+/TX- 	read line INPUT
-  cbi(DATAIN_DDR,  DATAIN);
-  cbi(DATAIN_PORT, DATAIN);
-
-  //avclan driver on PCA82C250
-  sbi(DATAOUT_DDR,  DATAOUT);
-  AVC_OUT_DIS;
-  OUTPUT_SET_0;
+  pinMode( 8, INPUT_PULLUP );
+  pinMode( 9, OUTPUT );
+  digitalWrite( 9, HIGH );
 
   // timer2 setup, prescaler factor - 8
   TCCR1B = 0x02;
 
   headAddress   = 0x0000;
   deviceAddress = 0x0000;
-  //  event         = EV_NONE;
   actionID      = ACT_NONE;
 }
 
@@ -73,28 +66,23 @@ byte AVCLanDrv::_readMessage ()
 
   // Start bit.
   while (INPUT_IS_CLEAR);
-  TCCR1B = 0x03;    // prescaler 32
   TCNT1 = 0;
   // Wait until falling edge.
   while (INPUT_IS_SET) {
     t = TCNT1;
     if (t > 0xFF) {
-      TCCR1B = 0x02;    // prescaler 8
       SREG = oldSREG;
       return 1;
     }
   }
-  TCCR1B = 0x02;    // prescaler 8
 
-  if (t < AVC_START_BIT_HOLD_ON_MIN_LENGTH) {
+  if (t < AVC_START_BIT_HOLD_ON_LENGTH ) {
     SREG = oldSREG;
     return 2;
   }
 
   broadcast = readBits(1);
-
   masterAddress = readBits(12);
-  if ( masterAddress != 0x0183 ) return 3; // skip other
 
   bool p = _parityBit;
   if (p != readBits(1)) {
@@ -103,7 +91,6 @@ byte AVCLanDrv::_readMessage ()
   }
 
   slaveAddress = readBits(12);
-  if ( slaveAddress != 0x0131 ) return 4; // skip other
 
   p = _parityBit;
   if (p != readBits(1)) {
@@ -191,7 +178,7 @@ byte AVCLanDrv::readMessage ()
   {
     while (!avclan.isAvcBusFree());
   }
-  // else avclan.printMessage(true);
+  else avclan.printMessage(true);
   return res;
 }
 
@@ -201,7 +188,7 @@ byte AVCLanDrv::readMessage ()
 ////--------------------------------------------------------------------------------
 //{
 //  // Reset timer to measure bit length.
-//  TCCR1B = 0x03;    // prescaler 32
+//  TCCR1B = 0x03;    // prescaler 64
 //  TCNT1 = 0;
 //  OUTPUT_SET_1;
 //
@@ -209,10 +196,9 @@ byte AVCLanDrv::readMessage ()
 //  while ( TCNT1 < AVC_START_BIT_HOLD_ON_LENGTH );
 //  OUTPUT_SET_0;
 //
-//  // Pulse level low duration until ~185 us.
+//  // Pulse level low duration until ~188 us.
 //  while ( TCNT1 < AVC_START_BIT_LENGTH );
 //  TCCR1B = 0x02;    // prescaler 8
-//
 //}
 
 // Send a 1 bit word to the AVCLan
@@ -222,7 +208,7 @@ void AVCLanDrv::send1BitWord (bool data)
 {
   // Reset timer to measure bit length.
   TCNT1 = 0;
-  OUTPUT_SET_1;
+  //  OUTPUT_SET_1;
 
   if (data) {
     while (TCNT1 < AVC_BIT_1_HOLD_ON_LENGTH);
@@ -230,7 +216,7 @@ void AVCLanDrv::send1BitWord (bool data)
     while (TCNT1 < AVC_BIT_0_HOLD_ON_LENGTH);
   }
 
-  OUTPUT_SET_0;
+  //  OUTPUT_SET_0;
   while (TCNT1 <  AVC_NORMAL_BIT_LENGTH);
 }
 
@@ -496,30 +482,41 @@ bool AVCLanDrv::isAvcBusFree (void)
 void AVCLanDrv::printMessage(bool incoming)
 //--------------------------------------------------------------------------------
 {
+  char tem[2];
+
   if (incoming)
   {
-    logSerial.print("< ");
+    Serial.print("< ");
   } else {
-    logSerial.print("> ");
+    Serial.print("> ");
   }
   if (broadcast == AVC_MSG_BROADCAST) {
-    logSerial.print("b ");
+    Serial.print("b ");
   } else {
-    logSerial.print("d ");
+    Serial.print("d ");
   }
-  //avclanBT.printHex4(masterAddress >> 8);
-  //avclanBT.printHex8(masterAddress);
-  logSerial.print(" ");
 
-  // avclanBT.printHex4(slaveAddress >> 8);
-  // avclanBT.printHex8(slaveAddress);
-  logSerial.print(" ");
-  // logSerial.printHex8(dataSize);
+  sprintf(tem, "%02X", masterAddress >> 8);
+  Serial.print(tem);
+  sprintf(tem, "%02X", masterAddress);
+  Serial.print(tem);
+
+  Serial.print(" ");
+
+  sprintf(tem, "%02X", slaveAddress >> 8);
+  Serial.print(tem);
+  sprintf(tem, "%02X", slaveAddress);
+  Serial.print(tem);
+
+  Serial.print(" ");
+  sprintf(tem, "%02X", dataSize);
+  Serial.print(tem);
 
   for (byte i = 0; i < dataSize; i++) {
-    // logSerial.printHex8(message[i]);
+    sprintf(tem, "%02X", message[i]);
+    Serial.print(tem);
   }
-  logSerial.println();
+  Serial.println();
 }
 
 
