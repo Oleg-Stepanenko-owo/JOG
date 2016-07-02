@@ -90,17 +90,19 @@ enum eActions {
 void setup()
 //---------------------------------------------------------------------------
 {
-  HONDA_DIS_ON;
+//  HONDA_DIS_ON;
 
-  Serial.begin(250000);
-  Serial1.begin(250000);
+  Serial.begin(250000); //LOG
+  Serial1.begin(4800);  //JOG
 
   avclan.begin();
   avclanHonda.begin();
+  avclan.deviceAddress = 0x0131;
+ 
 
   delay(100);
   Serial.print("Start jog version:");
-  Serial1.println( VERSIO_JOG );
+  Serial.println( VERSIO_JOG );
 
   lastAction = -1;
   actionIteration = 0;
@@ -112,8 +114,8 @@ void setup()
 
   bKybAction = true;
 
-  delay(10000); //sleep for showing original HONDA display
-  HONDA_DIS_OFF;
+//  delay(13000); //sleep for showing original HONDA display
+//  HONDA_DIS_OFF;
   isMainDisplay = false;
 }
 
@@ -181,7 +183,6 @@ void loop()
 {
   //----------------------- AVC LAN ------------------------------------------
   if ( INPUT_IS_SET ) {
-    //Serial.println("E");
     byte res = avclan.readMessage();
     if ( !res )
     {

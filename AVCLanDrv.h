@@ -30,7 +30,7 @@
 #define AVC_START_BIT_HOLD_ON_MIN_LENGTH  0x58  // 44 uS * (F_CPU / 1000000L / 8)      grater that AVC_NORMAL_BIT_LENGTH,  prescaler 32 (was 0x16)
 #define AVC_1U_LENGTH                     0x02  // 1 uS * (F_CPU / 1000000L / 8)
 
-#define AVC_MAXMSGLEN      32
+#define AVC_MAXMSGLEN      80
 #define AVC_CONTROL_FLAGS  0xF
 
 typedef enum
@@ -108,6 +108,11 @@ class AVCLanDrv {
     //    void  send12BitWord (word data);
     //    bool  readAcknowledge (void);
     //    bool  handleAcknowledge (void);
+
+    //----------------- PRINT
+    void printHex4(uint8_t data);
+    void printHex8(uint8_t data);
+    void sendByte(uint8_t val);
 };
 
 extern AVCLanDrv avclan;

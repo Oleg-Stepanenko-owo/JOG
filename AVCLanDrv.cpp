@@ -106,7 +106,7 @@ byte AVCLanDrv::_readMessage ()
     send1BitWord(0);
     AVC_OUT_DIS;
   } else {
-    readBits(1);
+    readBits(1); //ACK
   }
 
   // Control
@@ -177,6 +177,9 @@ byte AVCLanDrv::readMessage ()
   if (res)
   {
     while (!avclan.isAvcBusFree());
+    char tem[3] = {0};
+    sprintf(tem, "E%d", res);
+    Serial.print(tem);
   }
   else avclan.printMessage(true);
   return res;
@@ -482,7 +485,7 @@ bool AVCLanDrv::isAvcBusFree (void)
 void AVCLanDrv::printMessage(bool incoming)
 //--------------------------------------------------------------------------------
 {
-  char tem[2];
+//  char tem[2];
 
   if (incoming)
   {
@@ -496,25 +499,17 @@ void AVCLanDrv::printMessage(bool incoming)
     Serial.print("d ");
   }
 
-  sprintf(tem, "%02X", masterAddress >> 8);
-  Serial.print(tem);
-  sprintf(tem, "%02X", masterAddress);
-  Serial.print(tem);
-
+  printHex4(masterAddress >> 8);
+  printHex8(masterAddress);
   Serial.print(" ");
 
-  sprintf(tem, "%02X", slaveAddress >> 8);
-  Serial.print(tem);
-  sprintf(tem, "%02X", slaveAddress);
-  Serial.print(tem);
-
+  printHex4(slaveAddress >> 8);
+  printHex8(slaveAddress);
   Serial.print(" ");
-  sprintf(tem, "%02X", dataSize);
-  Serial.print(tem);
+  printHex8(dataSize);
 
   for (byte i = 0; i < dataSize; i++) {
-    sprintf(tem, "%02X", message[i]);
-    Serial.print(tem);
+    printHex8(message[i]);
   }
   Serial.println();
 }
@@ -566,6 +561,30 @@ byte AVCLanDrv::getActionID(const AvcInCmdTable messageTable[], byte mtSize)
 //  }
 //}
 
+//--------------------------------------------------------------------------------
+void AVCLanDrv::printHex4(uint8_t data)
+//--------------------------------------------------------------------------------
+{
+  uint8_t c = data & 0x0f;
+  c += c < 10 ? '0' : 'A' - 10 ;
+  sendByte(c);
+}
+
+//--------------------------------------------------------------------------------
+void AVCLanDrv::printHex8(uint8_t data)
+//--------------------------------------------------------------------------------
+{
+  printHex4(data >> 4);
+  printHex4(data);
+}
+
+
+//--------------------------------------------------------------------------------
+void AVCLanDrv::sendByte(uint8_t val)
+//--------------------------------------------------------------------------------
+{
+  Serial.write( val );
+}
 AVCLanDrv avclan;
 
 
