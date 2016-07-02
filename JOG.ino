@@ -5,7 +5,7 @@
 #include "AVCLanHonda.h"
 #include "config.h"
 
-#define VERSIO_JOG "0.7"
+#define VERSIO_JOG "0.75"
 
 //---------------------------------------------------------------------------
 static const int pkgLong = 4;
@@ -13,8 +13,10 @@ static const int pkgSize = 21;
 static int valInc = 0;
 
 
-#define HONDA_DIS_ON   sbi(COMMUT_PORT, COMMUT_OUT);
-#define HONDA_DIS_OFF  cbi(COMMUT_PORT, COMMUT_OUT);
+//#define HONDA_DIS_ON   sbi(COMMUT_PORT, COMMUT_OUT);
+//#define HONDA_DIS_OFF  cbi(COMMUT_PORT, COMMUT_OUT);
+#define HONDA_DIS_ON      analogWrite( A0, 255 ); analogWrite( A1, 0 );
+#define HONDA_DIS_OFF     analogWrite( A0, 0 ); analogWrite( A1, 255 );
 //---------------------------------------------------------------------------
 
 const int pkgData[pkgSize][pkgLong] = {
@@ -90,7 +92,10 @@ enum eActions {
 void setup()
 //---------------------------------------------------------------------------
 {
-//  HONDA_DIS_ON;
+  pinMode( A0, OUTPUT ); // Video signal
+  pinMode( A1, OUTPUT ); // JOG signal
+
+  HONDA_DIS_ON;
 
   Serial.begin(250000); //LOG
   Serial1.begin(4800);  //JOG
@@ -98,7 +103,7 @@ void setup()
   avclan.begin();
   avclanHonda.begin();
   avclan.deviceAddress = 0x0131;
- 
+
 
   delay(100);
   Serial.print("Start jog version:");
@@ -114,8 +119,8 @@ void setup()
 
   bKybAction = true;
 
-//  delay(13000); //sleep for showing original HONDA display
-//  HONDA_DIS_OFF;
+  delay(13000); //sleep for showing original HONDA display
+  HONDA_DIS_OFF;
   isMainDisplay = false;
 }
 
@@ -232,7 +237,7 @@ void loop()
     // Long PUSH
     wIsPush = 0;
     wIsLongPush = 0;
-    //    Serial.println("LONG PUSH!!!");
+    //     Serial.println("LONG PUSH!!!");
 
     isMainDisplay = !isMainDisplay;
 

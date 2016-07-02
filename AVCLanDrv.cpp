@@ -181,7 +181,7 @@ byte AVCLanDrv::readMessage ()
     sprintf(tem, "E%d", res);
     Serial.print(tem);
   }
-  else avclan.printMessage(true);
+ //  else avclan.printMessage(true);  //LOGGING
   return res;
 }
 
