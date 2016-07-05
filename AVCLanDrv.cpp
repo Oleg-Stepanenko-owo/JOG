@@ -177,11 +177,9 @@ byte AVCLanDrv::readMessage ()
   if (res)
   {
     while (!avclan.isAvcBusFree());
-    char tem[3] = {0};
-    sprintf(tem, "E%d", res);
-    Serial.print(tem);
+    Serial.print("E"); Serial.println(res);
   }
- //  else avclan.printMessage(true);  //LOGGING
+  else avclan.printMessage(true);  //LOGGING
   return res;
 }
 
@@ -485,7 +483,7 @@ bool AVCLanDrv::isAvcBusFree (void)
 void AVCLanDrv::printMessage(bool incoming)
 //--------------------------------------------------------------------------------
 {
-//  char tem[2];
+  //  char tem[2];
 
   if (incoming)
   {

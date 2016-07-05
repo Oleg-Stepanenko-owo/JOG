@@ -24,9 +24,9 @@
 #define AVC_NORMAL_BIT_LENGTH             0x4A  // 37 * (F_CPU / 1000000L / 8)
 #define AVC_BIT_1_HOLD_ON_LENGTH          0x28  // 20 uS * (F_CPU / 1000000L / 8)
 #define AVC_BIT_0_HOLD_ON_LENGTH          0x40  // 32 uS * (F_CPU / 1000000L / 8)
-#define AVC_BIT_0_HOLD_ON_MIN_LENGTH      0x34  // 36 uS * (F_CPU / 1000000L / 8)    Compare half way between a '1' (20 us) and a '0' (32 us ): 32 - (32 - 20) /2 = 26 us
-#define AVC_START_BIT_LENGTH              0x2F  // 188 uS  * (F_CPU / 1000000L / 64) ,  prescaler 64
-#define AVC_START_BIT_HOLD_ON_LENGTH      0x2A  // 168 uS * (F_CPU / 1000000L / 64)    prescaler 64
+#define AVC_BIT_0_HOLD_ON_MIN_LENGTH      0x32  // 36 uS * (F_CPU / 1000000L / 8)     0x34 Compare half way between a '1' (20 us) and a '0' (32 us ): 32 - (32 - 20) /2 = 26 us
+#define AVC_START_BIT_LENGTH              0x2D  // 188 uS  * (F_CPU / 1000000L / 64) ,  prescaler 64    0x2f
+#define AVC_START_BIT_HOLD_ON_LENGTH      0x28  // 168 uS * (F_CPU / 1000000L / 64)    prescaler 64     0x2a
 #define AVC_START_BIT_HOLD_ON_MIN_LENGTH  0x58  // 44 uS * (F_CPU / 1000000L / 8)      grater that AVC_NORMAL_BIT_LENGTH,  prescaler 32 (was 0x16)
 #define AVC_1U_LENGTH                     0x02  // 1 uS * (F_CPU / 1000000L / 8)
 

@@ -5,7 +5,7 @@
 #include "AVCLanHonda.h"
 #include "config.h"
 
-#define VERSIO_JOG "0.75"
+#define VERSIO_JOG "0.77"
 
 //---------------------------------------------------------------------------
 static const int pkgLong = 4;
@@ -136,18 +136,24 @@ int getAction()
       //      Serial.print(" "); Serial.println(pkgVal[1]);
       switch ( a ) {
         case SCROLL_LEFT :
+          Serial.println("SL!");
           return SCROLL_LEFT;
         case SCROLL_RIGHT :
+          Serial.println("SR!");
           return SCROLL_RIGHT;
         case PUSH :
           return PUSH;
         case TO_RIGHT :
+          Serial.println("JR!");
           return TO_RIGHT;
         case TO_LEFT :
+          Serial.println("JL!");
           return TO_LEFT;
         case TO_UP :
+          Serial.println("JU!");
           return TO_UP;
         case TO_DOWN :
+          Serial.println("JD!");
           return TO_DOWN;
         case TO_RIGHT_UP :
           return TO_RIGHT_UP;
@@ -160,20 +166,28 @@ int getAction()
         case AFTER_MOUSE_DOWN :
           return AFTER_MOUSE_DOWN;
         case  B_MAP:
+          Serial.println("MAP!");
           return B_MAP;
         case B_AUDIO :
+          Serial.println("AUDIO!");
           return B_AUDIO;
         case B_CANCEL :
+          Serial.println("CANCEL!");
           return B_CANCEL;
         case B_MENU :
+          Serial.println("MENU!");
           return B_MENU;
         case  B_AC :
+          Serial.println("AC!");
           return B_AC;
         case B_INFO :
+          Serial.println("INFO!");
           return B_INFO;
         case B_SETUP :
+          Serial.println("SETUP!");
           return B_SETUP;
         case B_LIGHT :
+          Serial.println("LIGHT!");
           return B_LIGHT;
         default:
           return -1;
@@ -233,11 +247,12 @@ void loop()
 
     lastAction = 0;
     Keyboard.releaseAll();
+    Serial.println("P!");
   } else if ( ( 0 != wIsLongPush) && ( wIsLongPush < millis()) ) {
     // Long PUSH
     wIsPush = 0;
     wIsLongPush = 0;
-    //     Serial.println("LONG PUSH!!!");
+    Serial.println("LP!");
 
     isMainDisplay = !isMainDisplay;
 
@@ -255,12 +270,9 @@ void loop()
 
   if ( valInc == pkgLong ) {
     int iAction = getAction();
-    //    Serial.print("A:"); Serial.println(iAction);
-
     if ( -1 != iAction ) valInc = 0;
 
     // Serial.print("LA:"); Serial.println(lastAction);
-
     if ( (lastAction == iAction) && wTime && (wTime > millis()) ) {
       valInc = 0;
       //      Serial.println("wTime");

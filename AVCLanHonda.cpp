@@ -72,11 +72,11 @@ void AVCLanHonda::begin()
   freezeTime = 0L;
 
   // timer1 setup, prescaler factor - 1024
-//  TCCR1A = 0;       // normal mode
-//  TCCR1B = 5;       // Prescaler /1024
-//  TCNT1H = TI1_H;   // Load counter value hi
-//  TCNT1L = TI1_L;   // Load counter value lo
-//  DISABLE_TIMER1_INT;
+  //  TCCR1A = 0;       // normal mode
+  //  TCCR1B = 5;       // Prescaler /1024
+  //  TCNT1H = TI1_H;   // Load counter value hi
+  //  TCNT1L = TI1_L;   // Load counter value lo
+  //  DISABLE_TIMER1_INT;
 }
 
 //--------------------------------------------------------------------------------
@@ -94,6 +94,7 @@ byte AVCLanHonda::getActionID()
 //--------------------------------------------------------------------------------
 {
   avclan.actionID = avclan.getActionID( mtSearchHead, mtSearchHeadSize );
+  Serial.print("A"); Serial.println(avclan.actionID);
   return avclan.actionID;
 };
 
