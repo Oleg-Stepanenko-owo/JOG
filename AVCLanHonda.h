@@ -31,6 +31,7 @@
 
 #define BUTT_WAIT 1000
 #define FREEZE_TIME 1500
+#define HONDADISPSHOWTIME 13000
 
 //--------------------------------------------------------------------------------
 typedef enum {

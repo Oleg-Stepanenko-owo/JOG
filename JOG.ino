@@ -50,7 +50,7 @@ const int maxWaitNextAction = 600;
 const int scrollNextAction = 300;
 const int mouseRange = 5;
 const int incRangeCount = 3;
-const int longpushtime =  1200;
+const int longpushtime =  1000;
 
 int lastAction;
 int actionIteration;
@@ -62,6 +62,8 @@ unsigned long wIsLongPush;
 
 bool bKybAction;
 bool isMainDisplay;
+bool isFirstTriger;
+bool isRearCam;
 //---------------------------------------------------------------------------
 
 enum eActions {
@@ -102,26 +104,24 @@ void setup()
 
   avclan.begin();
   avclanHonda.begin();
-  avclan.deviceAddress = 0x0131;
-
-
-  delay(100);
-  Serial.print("Start jog version:");
-  Serial.println( VERSIO_JOG );
+  avclan.deviceAddress = 0x0183;
 
   lastAction = -1;
   actionIteration = 0;
   moveStep = mouseRange;
   wTime = 0;
+  
   // initialize mouse control:
   Mouse.begin();
   Keyboard.begin();
 
   bKybAction = true;
+  isFirstTriger = true;
+  isRearCam = false;
 
-  delay(13000); //sleep for showing original HONDA display
-  HONDA_DIS_OFF;
-  isMainDisplay = false;
+  //  delay(13000); //sleep for showing original HONDA display
+  //  HONDA_DIS_OFF;
+  //  isMainDisplay = false;
 }
 
 //---------------------------------------------------------------------------
@@ -208,14 +208,24 @@ void loop()
       switch (avclanHonda.getActionID())
       {
         case ACT_CAM_ON:
+          isRearCam = true;
           HONDA_DIS_ON;
           break;
         case ACT_CAM_OFF:
           if ( !isMainDisplay ) HONDA_DIS_OFF;
+          isRearCam = false;
           break;
         default:
           break;
       }
+    }
+  }
+
+  if ( isFirstTriger && ( HONDADISPSHOWTIME < millis() ) ) {
+    isFirstTriger = false;
+    if ( !isRearCam ) {
+      HONDA_DIS_OFF;
+      isMainDisplay = false;
     }
   }
 

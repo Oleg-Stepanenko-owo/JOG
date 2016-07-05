@@ -94,7 +94,10 @@ byte AVCLanHonda::getActionID()
 //--------------------------------------------------------------------------------
 {
   avclan.actionID = avclan.getActionID( mtSearchHead, mtSearchHeadSize );
-  Serial.print("A"); Serial.println(avclan.actionID);
+  if ( avclan.actionID ) {
+    Serial.print("A");
+    Serial.println(avclan.actionID);
+  }
   return avclan.actionID;
 };
 
