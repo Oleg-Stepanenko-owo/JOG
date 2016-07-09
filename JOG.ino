@@ -12,9 +12,6 @@ static const int pkgLong = 4;
 static const int pkgSize = 21;
 static int valInc = 0;
 
-
-//#define HONDA_DIS_ON   sbi(COMMUT_PORT, COMMUT_OUT);
-//#define HONDA_DIS_OFF  cbi(COMMUT_PORT, COMMUT_OUT);
 #define HONDA_DIS_ON      analogWrite( A0, 255 ); analogWrite( A1, 0 );
 #define HONDA_DIS_OFF     analogWrite( A0, 0 ); analogWrite( A1, 255 );
 //---------------------------------------------------------------------------
@@ -104,7 +101,7 @@ void setup()
 
   avclan.begin();
   avclanHonda.begin();
-  avclan.deviceAddress = 0x0183;
+  avclan.deviceAddress = 0x0131;
 
   lastAction = -1;
   actionIteration = 0;
@@ -210,8 +207,10 @@ void loop()
         case ACT_CAM_ON:
           isRearCam = true;
           HONDA_DIS_ON;
+          Serial.println("CAM_ON");
           break;
         case ACT_CAM_OFF:
+          Serial.println("CAM_OFF");
           if ( !isMainDisplay ) HONDA_DIS_OFF;
           isRearCam = false;
           break;
@@ -222,8 +221,10 @@ void loop()
   }
 
   if ( isFirstTriger && ( HONDADISPSHOWTIME < millis() ) ) {
+    Serial.println("first_T");
     isFirstTriger = false;
     if ( !isRearCam ) {
+      Serial.println("Cam_off_2");
       HONDA_DIS_OFF;
       isMainDisplay = false;
     }

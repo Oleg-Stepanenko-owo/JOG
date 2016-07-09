@@ -35,6 +35,18 @@
 
 //--------------------------------------------------------------------------------
 typedef enum {
+  IE_DISP = 1, // 590D310201
+} IEBUS_COMMANDS_ID;
+
+typedef enum {
+  IE_DISP_ACTION = 1, // 21
+  IE_DISP_BREEGHNES,  // 22
+  IE_DISP_CONTRAST,   // 91
+  IE_DISP_BLACKLEVEL  // 94
+} IEBUS_COMMANDS;
+
+
+typedef enum {
   ACT_CAM_ON = 1,
   ACT_CAM_OFF,
   ACT_DISP_OFF,

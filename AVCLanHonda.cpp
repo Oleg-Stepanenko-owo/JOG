@@ -55,6 +55,35 @@ const AvcInCmdTable  mtSearchHead[] PROGMEM = {
   //        { ACT_VOL,            0x0A,    0x06, {0x68, 0x02, 0x31, 0x02, 0x02, 0x00}, 0x00, {0x00}}  //0x05 = 1
 };
 
+//  byte  id_commandID;    // id of CommandId
+//  byte  commandIDSize;   // Command ID size
+//  byte  commandID[6];    // Command ID
+const IEBUSCommandIdTable mtCommandIDList[] PROGMEM = {
+  {IE_DISP, 0x05, { 0x59, 0x0D, 0x31, 0x02, 0x01 }  }
+};
+
+//  byte  id_command;    // Command id
+//  byte  commandSize;   // Command size
+//  byte  command[6];    // Command 
+const IEBUSCommandIdTable mtCommandIDList[] PROGMEM = {
+  { IE_DISP_ACTION,       0x01, { 0x21 }  },
+  { IE_DISP_BREEGHNES,    0x01, { 0x22 }  },
+  { IE_DISP_CONTRAST,     0x01, { 0x91 }  },
+  { IE_DISP_BLACKLEVEL,   0x01, { 0x94 }  }
+};
+
+//  byte  actionID;        // Action id
+//  byte  dataSize;        // All message size (bytes)
+//  byte  id_commandID;    // Command ID 
+//  byte  id_command;      // Command
+//  byte  messageSize;     // MessageSize
+//  byte  message[16];     // Message
+const IEBUSInCmdTable mtSearchIEBusHead[] PROGMEM = {
+  { ACT_CAM_ON, 0x09, 0x05,  }
+
+};
+
+
 const byte mtSearchHeadSize = sizeof(mtSearchHead) / sizeof(AvcInCmdTable);
 
 //--------------------------------------------------------------------------------

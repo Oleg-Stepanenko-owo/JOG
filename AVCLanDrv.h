@@ -59,6 +59,30 @@ typedef struct
   byte  command;         // message
 } AvcInCmdTable;
 
+typedef struct
+{
+  byte  id_commandID;    // id of CommandId
+  byte  commandIDSize;   // Command ID size
+  byte  commandID[6];    // Command ID
+} IEBUSCommandIdTable;
+
+typedef struct
+{
+  byte  id_command;    // Command id
+  byte  commandSize;   // Command size
+  byte  command[6];    // Command 
+} IEBUSCommandTable;
+
+typedef struct
+{
+  byte  actionID;        // Action id
+  byte  dataSize;        // All message size (bytes)
+  byte  id_commandID;    // Command ID 
+  byte  id_command;      // Command
+  byte  messageSize;     // MessageSize
+  byte  message[16];     // Message
+} IEBUSInCmdTable;
+
 //typedef struct
 //{
 //  byte	actionID;           // Action id
