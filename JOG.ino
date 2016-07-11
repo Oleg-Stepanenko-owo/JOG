@@ -5,16 +5,13 @@
 #include "AVCLanHonda.h"
 #include "config.h"
 
-#define VERSIO_JOG "0.77"
+#define VERSIO_JOG "0.78"
 
 //---------------------------------------------------------------------------
 static const int pkgLong = 4;
 static const int pkgSize = 21;
 static int valInc = 0;
 
-
-//#define HONDA_DIS_ON   sbi(COMMUT_PORT, COMMUT_OUT);
-//#define HONDA_DIS_OFF  cbi(COMMUT_PORT, COMMUT_OUT);
 #define HONDA_DIS_ON      analogWrite( A0, 255 ); analogWrite( A1, 0 );
 #define HONDA_DIS_OFF     analogWrite( A0, 0 ); analogWrite( A1, 255 );
 //---------------------------------------------------------------------------
@@ -98,19 +95,20 @@ void setup()
   pinMode( A1, OUTPUT ); // JOG signal
 
   HONDA_DIS_ON;
+  isMainDisplay = true;
 
   Serial.begin(250000); //LOG
   Serial1.begin(4800);  //JOG
 
   avclan.begin();
   avclanHonda.begin();
-  avclan.deviceAddress = 0x0183;
+  avclan.deviceAddress = 0x0131;
 
   lastAction = -1;
   actionIteration = 0;
   moveStep = mouseRange;
   wTime = 0;
-  
+
   // initialize mouse control:
   Mouse.begin();
   Keyboard.begin();
@@ -209,10 +207,16 @@ void loop()
       {
         case ACT_CAM_ON:
           isRearCam = true;
-          HONDA_DIS_ON;
+          if ( !isMainDisplay ) {
+            HONDA_DIS_ON;
+          }
+          Serial.println("CAM_ON");
           break;
         case ACT_CAM_OFF:
-          if ( !isMainDisplay ) HONDA_DIS_OFF;
+          Serial.println("CAM_OFF");
+          if ( !isMainDisplay ) {
+            HONDA_DIS_OFF;
+          }
           isRearCam = false;
           break;
         default:
@@ -222,8 +226,10 @@ void loop()
   }
 
   if ( isFirstTriger && ( HONDADISPSHOWTIME < millis() ) ) {
+    Serial.println("first_T");
     isFirstTriger = false;
     if ( !isRearCam ) {
+      Serial.println("Cam_off_2");
       HONDA_DIS_OFF;
       isMainDisplay = false;
     }
@@ -234,15 +240,9 @@ void loop()
     pkgVal[valInc++] = Serial1.read();
     // Serial.println(pkgVal[valInc - 1]);
 
-    if (  valInc == 1 && pkgVal[0] != 128 && pkgVal[0] != 129 && pkgVal[0] != 255  ) {
+    if (  valInc == 1 && ( pkgVal[0] != 128 && pkgVal[0] != 129 && pkgVal[0] != 255 )  ) {
       valInc = 0;
       Serial.println("JE1");
-      return;
-    } else if ( valInc == 2 && pkgVal[1] > 3 && pkgVal[1] != 64
-                && pkgVal[1] != 32 && pkgVal[1] != 4 && pkgVal[1] != 16 && pkgVal[1] != 8 ) {
-      valInc = 0;
-      Serial.println("JE2");
-      return;
     }
   }
 
